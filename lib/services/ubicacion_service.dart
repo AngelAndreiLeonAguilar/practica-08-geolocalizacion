@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -57,15 +58,29 @@ class UbicacionService {
       }
 
       final posicion = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 20),
-        ),
+        locationSettings: _configuracion(),
       );
       return ResultadoUbicacion(EstadoUbicacion.obtenida, posicion: posicion);
     } catch (e) {
       return ResultadoUbicacion(EstadoUbicacion.error, detalle: e.toString());
     }
+  }
+
+  /// En Android se usa el LocationManager del sistema para no depender
+  /// de los servicios de Google Play (funciona también en equipos sin ellos).
+  LocationSettings _configuracion() {
+    const limite = Duration(seconds: 20);
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return AndroidSettings(
+        accuracy: LocationAccuracy.high,
+        forceLocationManager: true,
+        timeLimit: limite,
+      );
+    }
+    return const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      timeLimit: limite,
+    );
   }
 
   /// Distancia en metros entre dos coordenadas.
